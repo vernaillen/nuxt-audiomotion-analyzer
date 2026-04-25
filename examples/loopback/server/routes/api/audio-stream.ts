@@ -70,8 +70,7 @@ function startCapture(device: string) {
     for (const client of clients) {
       try {
         client.peer.send(base64Data)
-      }
-      catch (err) {
+      } catch (err) {
         console.error(`[AudioWebSocket] Error sending to client ${client.id}:`, err)
       }
     }
@@ -119,8 +118,7 @@ function addClient(peer: Peer, id: string, device: string) {
 
   if (clients.length === 1) {
     startCapture(device)
-  }
-  else if (device !== currentDevice) {
+  } else if (device !== currentDevice) {
     peer.send(JSON.stringify({
       type: 'info',
       message: `Another client is already streaming from ${currentDevice}. Using that device.`

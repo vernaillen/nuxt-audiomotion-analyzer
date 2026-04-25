@@ -41,8 +41,7 @@ async function listMacDevices(): Promise<AudioDevice[]> {
         })
       }
     }
-  }
-  catch (err) {
+  } catch (err) {
     console.error('[AudioDevices] ffmpeg device discovery failed:', err)
   }
   return devices
@@ -76,8 +75,7 @@ async function listLinuxDevices(): Promise<AudioDevice[]> {
         description: 'ALSA plugin device'
       })
     }
-  }
-  catch (err) {
+  } catch (err) {
     console.error('[AudioDevices] arecord device discovery failed:', err)
   }
   return devices

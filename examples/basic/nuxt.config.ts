@@ -6,8 +6,8 @@ export default defineNuxtConfig({
     '@nuxt/ui'
   ],
   devtools: { enabled: true },
-  compatibilityDate: '2026-04-25',
   css: ['~/assets/css/main.css'],
+  compatibilityDate: '2026-04-25',
   vite: {
     optimizeDeps: {
       include: [

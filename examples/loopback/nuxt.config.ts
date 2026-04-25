@@ -3,9 +3,20 @@ export default defineNuxtConfig({
   modules: [
     'nuxt-audiomotion-analyzer'
   ],
+  devtools: { enabled: true },
+  compatibilityDate: '2024-04-03',
   nitro: {
     experimental: {
       websocket: true
+    }
+  },
+  vite: {
+    optimizeDeps: {
+      include: [
+        '@vue/devtools-kit',
+        '@vue/devtools-core',
+        'audiomotion-analyzer'
+      ]
     }
   },
   nuxtAudiomotionAnalyzer: {
@@ -23,17 +34,6 @@ export default defineNuxtConfig({
       showBgColor: false,
       showPeaks: true,
       overlay: false
-    }
-  },
-  devtools: { enabled: true },
-  compatibilityDate: '2024-04-03',
-  vite: {
-    optimizeDeps: {
-      include: [
-        '@vue/devtools-kit',
-        '@vue/devtools-core',
-        'audiomotion-analyzer'
-      ]
     }
   }
 })

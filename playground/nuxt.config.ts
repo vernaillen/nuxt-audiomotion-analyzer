@@ -1,12 +1,7 @@
 export default defineNuxtConfig({
   modules: ['../src/module'],
-  nuxtAudiomotionAnalyzer: {
-    defaultOptions: {
-      height: 400
-    }
-  },
-  compatibilityDate: '2026-04-25',
   devtools: { enabled: true },
+  compatibilityDate: '2026-04-25',
   vite: {
     optimizeDeps: {
       include: [
@@ -14,6 +9,11 @@ export default defineNuxtConfig({
         '@vue/devtools-core',
         'audiomotion-analyzer'
       ]
+    }
+  },
+  nuxtAudiomotionAnalyzer: {
+    defaultOptions: {
+      height: 400
     }
   }
 })

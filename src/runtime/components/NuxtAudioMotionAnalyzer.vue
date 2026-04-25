@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUpdated, ref, watch } from 'vue'
-import type { GradientOptions, Options } from 'audiomotion-analyzer'
+import type { ConstructorOptions, GradientOptions } from 'audiomotion-analyzer'
 import AudioMotionAnalyzer from 'audiomotion-analyzer'
 import { useRuntimeConfig } from '#app'
 
@@ -13,7 +13,7 @@ const defaultOptions = config.public.nuxtAudiomotionAnalyzer.defaultOptions
 
 const props = defineProps<{
   id?: string
-  options?: Options
+  options?: ConstructorOptions
   gradient?: GradientOptions
   source: HTMLMediaElement | AudioNode | undefined
   fullScreen?: boolean

@@ -25,16 +25,7 @@ export default defineNuxtModule<ModuleOptions>({
 })
 
 declare module '@nuxt/schema' {
-
   interface PublicRuntimeConfig {
     nuxtAudiomotionAnalyzer: ModuleOptions
-  }
-
-  interface ConfigSchema {
-    runtimeConfig: {
-      public?: {
-        nuxtAudiomotionAnalyzer: ModuleOptions
-      }
-    }
   }
 }

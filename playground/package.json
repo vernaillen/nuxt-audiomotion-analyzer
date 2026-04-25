@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "nuxi dev",
     "build": "nuxi build",
-    "generate": "nuxi generate"
+    "generate": "nuxi generate",
+    "typecheck": "nuxi prepare && vue-tsc --noEmit"
   },
   "dependencies": {
     "nuxt": "^4.4.2"

@@ -8,7 +8,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "pnpm -w run prepack",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "typecheck": "nuxi prepare && vue-tsc --noEmit"
   },
   "dependencies": {
     "@nuxt/ui": "^4.7.0",

@@ -1,7 +1,10 @@
 <template>
   <div class="loopback-page">
     <div class="controls">
-      <div v-if="connectionError" class="error">
+      <div
+        v-if="connectionError"
+        class="error"
+      >
         {{ connectionError }}
       </div>
 
@@ -17,8 +20,17 @@
           v-model="selectedDevice"
           :disabled="isConnected || isConnecting || devices.length === 0"
         >
-          <option v-if="devices.length === 0" value="">Loading devices...</option>
-          <option v-for="device in devices" :key="device.id" :value="device.id">
+          <option
+            v-if="devices.length === 0"
+            value=""
+          >
+            Loading devices...
+          </option>
+          <option
+            v-for="device in devices"
+            :key="device.id"
+            :value="device.id"
+          >
             {{ device.name }} - {{ device.description }}
           </option>
         </select>
@@ -57,28 +69,47 @@
         :options="options"
         :full-screen="isFullscreen"
       />
-      <div v-else class="placeholder">
+      <div
+        v-else
+        class="placeholder"
+      >
         Click "Connect to Audio Stream" to begin visualization
       </div>
     </div>
 
     <div class="footer-controls">
-      <button class="btn" @click="isFullscreen = !isFullscreen">
+      <button
+        class="btn"
+        @click="isFullscreen = !isFullscreen"
+      >
         {{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}
       </button>
-      <button class="btn" :class="{ 'btn-active': !isMuted }" @click="toggleMute">
+      <button
+        class="btn"
+        :class="{ 'btn-active': !isMuted }"
+        @click="toggleMute"
+      >
         {{ isMuted ? 'Unmute' : 'Mute' }}
       </button>
       <label class="checkbox-label">
-        <input v-model="options.radial" type="checkbox">
+        <input
+          v-model="options.radial"
+          type="checkbox"
+        >
         Radial Mode
       </label>
       <label class="checkbox-label">
-        <input v-model="options.showPeaks" type="checkbox">
+        <input
+          v-model="options.showPeaks"
+          type="checkbox"
+        >
         Show Peaks
       </label>
       <label class="checkbox-label">
-        <input v-model="options.ledBars" type="checkbox">
+        <input
+          v-model="options.ledBars"
+          type="checkbox"
+        >
         LED Bars
       </label>
     </div>
@@ -86,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Options } from 'audiomotion-analyzer'
+import type { ConstructorOptions } from 'audiomotion-analyzer'
 
 interface AudioDevice {
   id: string
@@ -97,7 +128,7 @@ interface AudioDevice {
 const devices = ref<AudioDevice[]>([])
 const selectedDevice = ref('')
 
-const options = ref<Options>({
+const options = ref<ConstructorOptions>({
   mode: 5,
   barSpace: 0.25,
   gradient: 'rainbow',
@@ -137,9 +168,9 @@ const serverConfig = ref({
 
 const statusText = computed(() => {
   switch (connectionStatus.value) {
-    case 'disconnected': return 'Disconnected'
     case 'connecting': return 'Connecting...'
     case 'connected': return `Connected - Streaming ${serverConfig.value.sampleRate}Hz ${serverConfig.value.channels}ch ${serverConfig.value.bitDepth}bit audio`
+    default: return 'Disconnected'
   }
 })
 
