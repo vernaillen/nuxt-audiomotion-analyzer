@@ -1,4 +1,10 @@
 packages:
- - '.'
- - 'playground'
- - 'examples/basic'
+  - .
+  - playground
+  - examples/basic
+
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - esbuild
+  - unrs-resolver
+  - vue-demi
