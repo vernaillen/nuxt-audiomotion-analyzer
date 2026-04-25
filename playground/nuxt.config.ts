@@ -5,5 +5,15 @@ export default defineNuxtConfig({
       height: 400
     }
   },
-  devtools: { enabled: true }
+  compatibilityDate: '2026-04-25',
+  devtools: { enabled: true },
+  vite: {
+    optimizeDeps: {
+      include: [
+        '@vue/devtools-kit',
+        '@vue/devtools-core',
+        'audiomotion-analyzer'
+      ]
+    }
+  }
 })
