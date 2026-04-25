@@ -1,84 +1,158 @@
-<!--
-Get your module up and running quickly.
-
-Find and replace all on all files (CMD+SHIFT+F):
-- Name: My Module
-- Package name: my-module
-- Description: My new Nuxt module
--->
-
-# My Module
+# nuxt-audiomotion-analyzer
 
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
 [![License][license-src]][license-href]
 [![Nuxt][nuxt-src]][nuxt-href]
 
-My new Nuxt module for doing amazing things.
+A Nuxt 4 module that wraps [audioMotion-analyzer](https://audiomotion.dev/) — a high-resolution real-time audio spectrum analyzer based on the Web Audio API — and exposes it as a ready-to-use `<NuxtAudioMotionAnalyzer>` component.
 
-- [✨ &nbsp;Release Notes](/CHANGELOG.md)
-<!-- - [🏀 Online playground](https://stackblitz.com/github/your-org/my-module?file=playground%2Fapp.vue) -->
-<!-- - [📖 &nbsp;Documentation](https://example.com) -->
+Point it at any `HTMLMediaElement` (e.g. `<audio>`, `<video>`) or Web Audio `AudioNode` and you get a reactive, configurable spectrum visualizer with gradients, radial mode, fullscreen toggling, and all the options the underlying library supports.
 
 ## Features
 
-<!-- Highlight some of the features your module provide here -->
-- ⛰ &nbsp;Foo
-- 🚠 &nbsp;Bar
-- 🌲 &nbsp;Baz
+- 🎚️ Drop-in `<NuxtAudioMotionAnalyzer>` component, auto-imported
+- 🎨 Full access to audioMotion-analyzer options (modes, gradients, reflex, peaks, …)
+- 🔁 Reactive — change `options` and the analyzer updates live
+- 🖥️ Reactive `fullScreen` prop
+- 🌈 Custom gradient registration via the `gradient` prop
+- ⚙️ Project-wide defaults via `nuxt.config.ts`
 
-## Quick Setup
-
-Install the module to your Nuxt application with one command:
+## Installation
 
 ```bash
-npx nuxi module add my-module
+pnpm add nuxt-audiomotion-analyzer
+# or
+npx nuxi module add nuxt-audiomotion-analyzer
 ```
 
-That's it! You can now use My Module in your Nuxt app ✨
+Add it to your `nuxt.config.ts`:
 
+```ts
+export default defineNuxtConfig({
+  modules: ['nuxt-audiomotion-analyzer'],
 
-## Contribution
+  // optional — defaults applied to every analyzer instance
+  nuxtAudiomotionAnalyzer: {
+    defaultOptions: {
+      height: 500
+    }
+  }
+})
+```
 
-<details>
-  <summary>Local development</summary>
-  
-  ```bash
-  # Install dependencies
-  npm install
-  
-  # Generate type stubs
-  npm run dev:prepare
-  
-  # Develop with the playground
-  npm run dev
-  
-  # Build the playground
-  npm run dev:build
-  
-  # Run ESLint
-  npm run lint
-  
-  # Run Vitest
-  npm run test
-  npm run test:watch
-  
-  # Release new version
-  npm run release
-  ```
+## Usage
 
-</details>
+```vue
+<template>
+  <div>
+    <button @click="isPlaying ? audio?.pause() : audio?.play()">
+      {{ isPlaying ? 'Pause' : 'Play' }}
+    </button>
 
+    <audio
+      id="audio"
+      ref="audioRef"
+      src="https://ice2.somafm.com/beatblender-128-mp3"
+      crossorigin="anonymous"
+    />
+
+    <NuxtAudioMotionAnalyzer
+      :source="audio"
+      :options="options"
+      :full-screen="isFullscreen"
+    />
+
+    <button @click="isFullscreen = !isFullscreen">Fullscreen</button>
+    <label>
+      Radial <input v-model="options.radial" type="checkbox">
+    </label>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { Options } from 'audiomotion-analyzer'
+
+const options = ref<Options>({
+  mode: 5,
+  barSpace: 0.25,
+  gradient: 'rainbow',
+  radial: false,
+  reflexAlpha: 0.25,
+  reflexRatio: 0.3,
+  showPeaks: true
+})
+
+const audio = ref<HTMLMediaElement>()
+const isPlaying = ref(false)
+const isFullscreen = ref(false)
+
+onMounted(() => {
+  audio.value = document.getElementById('audio') as HTMLMediaElement
+  audio.value.onplaying = () => (isPlaying.value = true)
+  audio.value.onpause = () => (isPlaying.value = false)
+})
+</script>
+```
+
+## Component API
+
+### `<NuxtAudioMotionAnalyzer>`
+
+| Prop         | Type                                       | Description                                                                  |
+| ------------ | ------------------------------------------ | ---------------------------------------------------------------------------- |
+| `source`     | `HTMLMediaElement \| AudioNode \| undefined` | Audio source to analyze. Required (the analyzer initializes once it exists). |
+| `options`    | `ConstructorOptions`                       | audioMotion-analyzer options. Reactive — updates are applied live.           |
+| `gradient`   | `GradientOptions`                          | Custom gradient, registered as `'custom-gradient'` and applied automatically. |
+| `fullScreen` | `boolean`                                  | Toggle the analyzer's fullscreen mode.                                       |
+| `id`         | `string`                                   | Optional DOM id for the wrapper element.                                     |
+
+See the [audioMotion-analyzer docs](https://audiomotion.dev/#/?id=options-object) for the full list of supported options.
+
+## Module Options
+
+```ts
+interface ModuleOptions {
+  defaultOptions?: import('audiomotion-analyzer').Options
+}
+```
+
+Defaults are merged with the per-component `options` prop (component options win on conflict).
+
+## Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Generate type stubs
+pnpm dev:prepare
+
+# Develop with the playground
+pnpm dev
+
+# Build the playground
+pnpm dev:build
+
+# Lint / typecheck / test
+pnpm lint
+pnpm typecheck
+pnpm test
+```
+
+## License
+
+[MIT](./LICENSE) — built on top of [audioMotion-analyzer](https://github.com/hvianna/audioMotion-analyzer) by Henrique Vianna.
 
 <!-- Badges -->
-[npm-version-src]: https://img.shields.io/npm/v/my-module/latest.svg?style=flat&colorA=020420&colorB=00DC82
-[npm-version-href]: https://npmjs.com/package/my-module
+[npm-version-src]: https://img.shields.io/npm/v/nuxt-audiomotion-analyzer/latest.svg?style=flat&colorA=020420&colorB=00DC82
+[npm-version-href]: https://npmjs.com/package/nuxt-audiomotion-analyzer
 
-[npm-downloads-src]: https://img.shields.io/npm/dm/my-module.svg?style=flat&colorA=020420&colorB=00DC82
-[npm-downloads-href]: https://npmjs.com/package/my-module
+[npm-downloads-src]: https://img.shields.io/npm/dm/nuxt-audiomotion-analyzer.svg?style=flat&colorA=020420&colorB=00DC82
+[npm-downloads-href]: https://npmjs.com/package/nuxt-audiomotion-analyzer
 
-[license-src]: https://img.shields.io/npm/l/my-module.svg?style=flat&colorA=020420&colorB=00DC82
-[license-href]: https://npmjs.com/package/my-module
+[license-src]: https://img.shields.io/npm/l/nuxt-audiomotion-analyzer.svg?style=flat&colorA=020420&colorB=00DC82
+[license-href]: https://npmjs.com/package/nuxt-audiomotion-analyzer
 
 [nuxt-src]: https://img.shields.io/badge/Nuxt-020420?logo=nuxt.js
 [nuxt-href]: https://nuxt.com
