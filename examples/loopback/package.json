@@ -1,0 +1,25 @@
+{
+  "name": "nuxt-audiomotion-loopback",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev --host 10.0.2.213 --port 3002",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "pnpm -w run prepack"
+  },
+  "dependencies": {
+    "nuxt": "^3.11.2",
+    "nuxt-audiomotion-analyzer": "workspace:latest",
+    "vue": "^3.4.27",
+    "vue-router": "^4.3.2"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.10"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.8",
+    "utf-8-validate": "^6.0.3"
+  }
+}
