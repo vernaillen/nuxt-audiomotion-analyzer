@@ -1,33 +1,57 @@
 import { spawn, type ChildProcess } from 'node:child_process'
+import type { Peer } from 'crossws'
 
-// Audio capture settings
+const IS_MAC = process.platform === 'darwin'
+
 const CHANNELS = 2
-const BIT_DEPTH = 32
-const DEFAULT_DEVICE = 'gadget'
+const BIT_DEPTH = IS_MAC ? 16 : 32
 
-// Device-specific sample rates (some devices run at different rates)
-const DEVICE_SAMPLE_RATES: Record<string, number> = {
-  'loopsnoop2': 192000,  // camilladsp2 runs at 192kHz
-  'gadget': 96000,       // squeezelite/LMS runs at 96kHz
+// Linux/Pi: device-specific sample rates from prior setup
+const LINUX_DEVICE_SAMPLE_RATES: Record<string, number> = {
+  loopsnoop2: 192000,
+  gadget: 96000
 }
-const DEFAULT_SAMPLE_RATE = 96000
+const DEFAULT_SAMPLE_RATE = IS_MAC ? 48000 : 96000
+const DEFAULT_DEVICE = IS_MAC ? ':0' : 'gadget'
 
-// Map bit depth to arecord format
-const ARECORD_FORMAT = BIT_DEPTH === 24 ? 'S24_3LE' : BIT_DEPTH === 32 ? 'S32_LE' : 'S16_LE'
+const ARECORD_FORMAT = BIT_DEPTH === 32 ? 'S32_LE' : 'S16_LE'
 
 interface AudioClient {
-  peer: any
+  peer: Peer
   id: string
 }
 
-let arecordProcess: ChildProcess | null = null
+let captureProcess: ChildProcess | null = null
 let clients: AudioClient[] = []
 let isCapturing = false
 let currentDevice: string = DEFAULT_DEVICE
 let currentSampleRate: number = DEFAULT_SAMPLE_RATE
 
 function getSampleRateForDevice(device: string): number {
-  return DEVICE_SAMPLE_RATES[device] || DEFAULT_SAMPLE_RATE
+  if (IS_MAC) return DEFAULT_SAMPLE_RATE
+  return LINUX_DEVICE_SAMPLE_RATES[device] || DEFAULT_SAMPLE_RATE
+}
+
+function spawnCapture(device: string, sampleRate: number) {
+  if (IS_MAC) {
+    return spawn('ffmpeg', [
+      '-loglevel', 'error',
+      '-f', 'avfoundation',
+      '-i', device,
+      '-f', 's16le',
+      '-ar', String(sampleRate),
+      '-ac', String(CHANNELS),
+      'pipe:1'
+    ])
+  }
+  return spawn('arecord', [
+    '-D', device,
+    '-f', ARECORD_FORMAT,
+    '-c', String(CHANNELS),
+    '-r', String(sampleRate),
+    '-t', 'raw',
+    '--buffer-size', '16384'
+  ])
 }
 
 function startCapture(device: string) {
@@ -35,79 +59,68 @@ function startCapture(device: string) {
 
   currentDevice = device
   currentSampleRate = getSampleRateForDevice(device)
-  console.log(`[AudioWebSocket] Starting arecord capture from ${device} (${currentSampleRate}Hz, ${CHANNELS}ch, ${BIT_DEPTH}bit, format: ${ARECORD_FORMAT})`)
+  const tool = IS_MAC ? 'ffmpeg' : 'arecord'
+  console.log(`[AudioWebSocket] Starting ${tool} capture from ${device} (${currentSampleRate}Hz, ${CHANNELS}ch, ${BIT_DEPTH}bit)`)
 
-  arecordProcess = spawn('arecord', [
-    '-D', device,
-    '-f', ARECORD_FORMAT,
-    '-c', String(CHANNELS),
-    '-r', String(currentSampleRate),
-    '-t', 'raw',
-    '--buffer-size', '16384'
-  ])
-
+  captureProcess = spawnCapture(device, currentSampleRate)
   isCapturing = true
 
-  arecordProcess.stdout?.on('data', (data: Buffer) => {
-    // Encode as base64 with prefix for identification
+  captureProcess.stdout?.on('data', (data: Buffer) => {
     const base64Data = 'PCM:' + data.toString('base64')
-
-    // Broadcast PCM data to all connected clients
     for (const client of clients) {
       try {
         client.peer.send(base64Data)
-      } catch (err) {
+      }
+      catch (err) {
         console.error(`[AudioWebSocket] Error sending to client ${client.id}:`, err)
       }
     }
   })
 
-  arecordProcess.stderr?.on('data', (data: Buffer) => {
-    console.log(`[AudioWebSocket] arecord stderr: ${data.toString()}`)
+  captureProcess.stderr?.on('data', (data: Buffer) => {
+    console.log(`[AudioWebSocket] ${tool} stderr: ${data.toString()}`)
   })
 
-  arecordProcess.on('close', (code) => {
-    console.log(`[AudioWebSocket] arecord exited with code ${code}`)
+  captureProcess.on('close', (code) => {
+    console.log(`[AudioWebSocket] ${tool} exited with code ${code}`)
     isCapturing = false
-    arecordProcess = null
+    captureProcess = null
   })
 
-  arecordProcess.on('error', (err) => {
-    console.error('[AudioWebSocket] arecord error:', err)
+  captureProcess.on('error', (err) => {
+    console.error(`[AudioWebSocket] ${tool} error:`, err)
     isCapturing = false
-    arecordProcess = null
+    captureProcess = null
   })
 }
 
 function stopCapture() {
-  if (arecordProcess) {
-    console.log('[AudioWebSocket] Stopping arecord capture')
-    arecordProcess.kill('SIGTERM')
-    arecordProcess = null
+  if (captureProcess) {
+    console.log('[AudioWebSocket] Stopping capture')
+    captureProcess.kill('SIGTERM')
+    captureProcess = null
     isCapturing = false
   }
 }
 
-function addClient(peer: any, id: string, device: string) {
+function addClient(peer: Peer, id: string, device: string) {
   clients.push({ peer, id })
   console.log(`[AudioWebSocket] Client ${id} connected. Total clients: ${clients.length}`)
 
   const sampleRate = clients.length === 1 ? getSampleRateForDevice(device) : currentSampleRate
 
-  // Send audio config to client
   peer.send(JSON.stringify({
     type: 'config',
-    sampleRate: sampleRate,
+    sampleRate,
     channels: CHANNELS,
     bitDepth: BIT_DEPTH,
     device: clients.length === 1 ? device : currentDevice
   }))
 
-  // Start capture if this is the first client
   if (clients.length === 1) {
     startCapture(device)
-  } else if (device !== currentDevice) {
-    // If a different device is requested, notify the client
+  }
+  else if (device !== currentDevice) {
     peer.send(JSON.stringify({
       type: 'info',
       message: `Another client is already streaming from ${currentDevice}. Using that device.`
@@ -118,8 +131,6 @@ function addClient(peer: any, id: string, device: string) {
 function removeClient(id: string) {
   clients = clients.filter(c => c.id !== id)
   console.log(`[AudioWebSocket] Client ${id} disconnected. Total clients: ${clients.length}`)
-
-  // Stop capture if no clients remain
   if (clients.length === 0) {
     stopCapture()
   }
@@ -128,12 +139,11 @@ function removeClient(id: string) {
 export default defineWebSocketHandler({
   open(peer) {
     const clientId = Math.random().toString(36).substring(7)
-    // Store clientId on the peer object for later reference
-    ;(peer as any)._clientId = clientId
+    ;(peer as unknown as { _clientId: string })._clientId = clientId
 
-    // Extract device from URL query string
-    // URL format: /api/audio-stream?device=gadget
-    const url = (peer as any).request?.url || (peer as any).url || ''
+    const url = (peer as unknown as { request?: { url?: string }, url?: string }).request?.url
+      || (peer as unknown as { url?: string }).url
+      || ''
     const urlParams = new URLSearchParams(url.split('?')[1] || '')
     const device = urlParams.get('device') || DEFAULT_DEVICE
 
@@ -141,17 +151,13 @@ export default defineWebSocketHandler({
   },
 
   close(peer) {
-    const clientId = (peer as any)._clientId
-    if (clientId) {
-      removeClient(clientId)
-    }
+    const clientId = (peer as unknown as { _clientId?: string })._clientId
+    if (clientId) removeClient(clientId)
   },
 
   error(peer, error) {
-    const clientId = (peer as any)._clientId
+    const clientId = (peer as unknown as { _clientId?: string })._clientId
     console.error(`[AudioWebSocket] Error for client ${clientId}:`, error)
-    if (clientId) {
-      removeClient(clientId)
-    }
+    if (clientId) removeClient(clientId)
   }
 })
