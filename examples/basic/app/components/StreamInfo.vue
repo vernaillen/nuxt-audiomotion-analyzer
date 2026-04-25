@@ -8,7 +8,7 @@
     >
       Soma FM Beat Blender
       <UIcon
-        class="i-heroicons-arrow-up-right-20-solid w-3 h-3 absolute top-0.5 -right-3.5 text-gray-400 dark:text-gray-500"
+        class="i-heroicons-arrow-up-right-20-solid w-3 h-3 absolute top-0.5 -right-3.5 text-dimmed"
         name="i-heroicons-arrow-up-right-20-solid"
       />
     </ULink>

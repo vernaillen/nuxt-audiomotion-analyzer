@@ -1,11 +1,35 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  extends: ['@nuxt/ui-pro'],
   modules: [
     'nuxt-audiomotion-analyzer',
     '@nuxt/eslint',
     '@nuxt/ui'
   ],
+  devtools: { enabled: true },
+  compatibilityDate: '2026-04-25',
+  css: ['~/assets/css/main.css'],
+  vite: {
+    optimizeDeps: {
+      include: [
+        '@vue/devtools-kit',
+        '@vue/devtools-core',
+        'audiomotion-analyzer'
+      ]
+    }
+  },
+  eslint: {
+    config: {
+      stylistic: {
+        commaDangle: 'never',
+        braceStyle: '1tbs'
+      }
+    },
+    checker: {
+      lintOnStart: true,
+      fix: true,
+      eslintPath: 'eslint'
+    }
+  },
   nuxtAudiomotionAnalyzer: {
     defaultOptions: {
       mode: 5,
@@ -22,21 +46,5 @@ export default defineNuxtConfig({
       showPeaks: true,
       overlay: false
     }
-  },
-  ui: {
-    icons: ['mdi', 'simple-icons']
-  },
-  eslint: {
-    config: {
-      stylistic: {
-        commaDangle: 'never',
-        braceStyle: '1tbs'
-      }
-    },
-    checker: {
-      lintOnStart: true,
-      fix: true
-    }
-  },
-  devtools: { enabled: true }
+  }
 })
